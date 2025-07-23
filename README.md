@@ -1,265 +1,140 @@
-# SDK7 Template scene
+Interactive Nightclub Scene 🎵
+Welcome to the Interactive Nightclub Scene, a project built with the Decentraland SDK 7. This scene is a practical example demonstrating how to build a dynamic and engaging environment. It features a streaming video screen, an animated dance floor, moving lights, and an interactive control panel to manage the effects.
 
-## Try it out
+This repository is designed to be a learning tool for developers, illustrating key SDK 7 concepts with practical code.
 
-**Previewing the scene**
+Features ✨
+Streaming Video Screen: A large screen at the back of the venue streams video content.
 
-1. Download this repository.
+Pulsing Dance Floor: An emissive dance floor that smoothly cycles through a spectrum of colors.
 
-2. Install the [Decentraland Editor](https://docs.decentraland.org/creator/development-guide/sdk7/editor/)
+Animated Club Lights: A set of moving lights that circle the room and change color.
 
-3. Open a Visual Studio Code window on this scene's root folder. Not on the root folder of the whole repo, but instead on this sub-folder that belongs to the scene.
+Interactive Control Panel: Players can use clickable buttons to toggle the dance floor and the club lights on or off.
 
-4. Open the Decentraland Editor tab, and press **Run Scene**
+Try it out 🚀
+To run this scene, clone the repository, navigate into the directory, and run the following commands:
 
-Alternatively, you can use the command line. Inside this scene root directory run:
+Bash
 
-```
+# Install project dependencies (only needed for the default video player)
+npm install
+
+# Start the local development server
 npm run start
-```
+Alternatively, you can open the project folder in VS Code and use the Run Scene button in the Decentraland Editor extension.
 
-## What's new on SDK 7
+Video Player Options 🎬
+This scene includes two different methods for playing video, which you can switch between in src/index.ts.
 
-Below are some basic concepts about the SDK 7 syntax. For more details, see the [Documentation site](https://docs.decentraland.org/creator/).
+Option 1: Third-Party Library (Default)
+The scene defaults to using the @m1d/dcl-components library.
 
-### Entities
+Pros: Provides a user interface with playback controls and other features.
 
-An Entity is just an ID. It is an abstract concept not represented by any data structure. There is no "class Entity". Just a number that is used as a reference to group different components.
+Cons: Requires installing an external library by running npm install.
 
-```ts
-const myEntity = engine.addEntity()
-console.console.log(myEntity) // 100
+Option 2: Built-in SDK Components
+The project also contains a commented-out block that uses the SDK's native VideoPlayer component.
 
-// Remove Entity
-engine.removeEntity(myEntity)
-```
+Pros: No external libraries are needed. The scene will run without needing to npm install.
 
-> Note: Note that it's no longer necessary to separately create an entity and then add it to the engine, this is all done in a single act.
+Cons: Provides a basic video stream with no built-in UI for playback controls.
 
-### Components
+How to enable: In src/index.ts, comment out the "OPTION 1" block and uncomment the "OPTION 2" block.
 
-The component is just a data container, WITHOUT any functions.
+SDK 7 Concepts in this Scene
+Below are the core Decentraland SDK 7 concepts used to build this scene.
 
-To add a component to an entity, the entry point is now the component type, not the entity.
+Entities
+An Entity is a unique identifier that groups different components together. It's the foundation for any object in your scene, like the floor, the screen, or the lights.
 
-```ts
-Transform.create(myEntity, <params>)
-```
+In venue.ts, a new entity for the floor is created and immediately assigned components:
 
-This is different from how the syntax was in SDK6:
+TypeScript
 
-```ts
-// OLD Syntax
-myEntity.addComponent(Transform)
-```
+// An entity for the floor is created
+const floor = engine.addEntity()
 
-#### Base Components
-
-Base components already come packed as part of the SDK. Most of them interact directly with the renderer in some way. This is the full list of currently supported base components:
-
-- Transform
-- Animator
-- Material
-- MeshRenderer
-- MeshCollider
-- AudioSource
-- AudioStream
-- AvatarAttach
-- AvatarModifierArea
-- AvatarShape
-- Billboard
-- CameraMode
-- CameraModeArea
-- GltfContainer
-- NftShape
-- PointerEventsResult
-- PointerHoverFeedback
-- PointerLock
-- Raycast
-- RaycastResult
-- TextShape
-- VisibilityComponent
-
-```ts
-const entity = engine.addEntity()
-Transfrom.create(entity, {
-  position: Vector3.create(12, 1, 12)
-  scale: Vector3.One(),
-  rotation: Quaternion.Identity()
+// Components are then added to the 'floor' entity to give it properties
+Transform.create(floor, {
+    position: { x: 8, y: 0, z: 8 },
+    scale: { x: 16, y: 0.1, z: 16 }
 })
-GltfContainer.create(zombie, {
-  withCollisions: true,
-  isPointerBlocker: true,
-  visible: true,
-  src: 'models/zombie.glb'
+MeshRenderer.setBox(floor)
+Note: It's no longer necessary to separately create an entity and then add it to the engine; this is all done in a single act with engine.addEntity().
+
+Components
+A Component is a container for data that defines an aspect of an entity. Components have no functions, only data. In this scene, we use several of the SDK's built-in components:
+
+Transform: Defines an entity's position, rotation, and scale.
+
+MeshRenderer: Gives an entity a visible shape (like a box or sphere).
+
+MeshCollider: Gives an entity a physical shape for collisions.
+
+Material: Defines an entity's appearance, such as its color, texture, and whether it glows.
+
+PointerEvents: Makes an entity clickable by the player.
+
+TextShape: Displays 3D text in the scene.
+
+To add a component, you call its create() method with the entity ID and its data. For example, in fx.ts, the dance floor button is given a Material and made clickable with PointerEvents:
+
+TypeScript
+
+// Give the button a green material
+Material.setPbrMaterial(danceFloorButton, { albedoColor: Color4.Green() })
+
+// Make the button interactive
+PointerEvents.create(danceFloorButton, {
+    pointerEvents: [{
+        eventType: PointerEventType.PET_DOWN, // Event triggers on click
+        eventInfo: { button: InputAction.IA_POINTER, hoverText: 'Toggle Dance Floor' }
+    }]
 })
-```
+Systems
+A System is a function that contains the logic of your scene. Systems run on every frame and are used to create animation, respond to input, and change component data over time.
 
-#### Custom Components
+To add a system, you define a function and pass it to engine.addSystem(). The function can optionally include a dt parameter, which is the time in seconds since the last frame.
 
-Each component must have a unique number ID. If a number is repeated, the engine or another player receiving updates might apply changes to the wrong component. Note that numbers 1-2000 are reserved for the base components.
+The clubLightsSystem in fx.ts animates the lights' position and color:
 
-When creating a custom component you declare the schema of the data to be stored in it. Every field in a component MUST belong to one of the built-in special schemas provided as part of the SDK. These special schemas include extra functionality that allows them to be serialized/deserialized.
+TypeScript
 
-Currently, the names of these special schemas are:
-
-##### Primitives
-
-1. `Schemas.Boolean`: true or false (serialized as a Byte)
-2. `Schemas.String`: UTF8 strings (serialized length and content)
-3. `Schemas.Float`: single precission float
-4. `Schemas.Double`: double precision float
-5. `Schemas.Byte`: a single byte, integer with range 0..255
-6. `Schemas.Short`: 16 bits signed-integer with range -32768..32767
-7. `Schemas.Int`: 32 bits signed-integer with range -2³¹..(2³¹-1)
-8. `Schemas.Int64`: 64 bits signed-integer
-9. `Schemas.Number`: an alias to Schemas.Float
-
-##### Specials
-
-10. `Schemas.Entity`: a wrapper to int32 that casts the type to `Entity`
-11. `Schemas.Vector3`: a Vector3 with { x, y, z }
-12. `Schemas.Quaternion`: a Quaternion with { x, y, z, w}
-13. `Schemas.Color3`: a Color3 with { r, g, b }
-14. `Schemas.Color4`: a Colo4 with { r, g, b, a }
-
-##### Schema generator
-
-15. `Schemas.Enum`: passing the serialization Schema and the original Enum as generic
-16. `Schemas.Array`: passing the item Schema
-17. `Schemas.Map`: passing a Map with Schemas as values
-18. `Schemas.Optional`: passing the schema to serialize
-
-Below are some examples of how these schemas can be declared.
-
-```ts
-const object = Schemas.Map({ x: Schemas.Int }) // { x: 1 }
-
-const array = Schemas.Map(Schemas.Int) // [1,2,3,4]
-
-const objectArray = Schemas.Array(Schemas.Map({ x: Schemas.Int })) // [{ x: 1 }, { x: 2 }]
-
-const BasicSchemas = Schemas.Map({
-  x: Schemas.Int,
-  y: Schemas.Float,
-  text: Schemas.String,
-  flag: Schemas.Boolean
-}) // { x: 1, y: 1.412, text: 'ecs 7 text', flag: true }
-
-const VelocitySchema = Schemas.Map({
-  x: Schemas.Float,
-  y: Schemas.Float,
-  z: Schemas.Float
-})
-```
-
-To then create a custom component using one of these schemas, use the following syntax:
-
-```ts
-export const myCustomComponent = engine.defineComponent(MyDataSchema, ComponentID)
-```
-
-For contrast, below is an example of how components were constructed prior to SDK 7.
-
-```ts
-/**
- * OLD SDK
- */
-
-// Define Component
-@Component('velocity')
-export class Velocity extends Vector3 {
-  constructor(x: number, y: number, z: number) {
-    super(x, y, z)
-  }
-}
-// Create entity
-const wheel = new Entity()
-
-// Create instance of component with default values
-wheel.addComponent(new WheelSpin())
-
-/**
- * ECS 7
- */
-// Define Component
-const VelocitySchema = Schemas.Map({
-  x: Schemas.Float,
-  y: Schemas.Float,
-  z: Schemas.Float
-})
-const COMPONENT_ID = 2008
-const VelocityComponent = engine.defineComponent(Velocity, COMPONENT_ID)
-// Create Entity
-const entity = engine.addEntity()
-
-// Create instance of component
-VelocityComponent.create(entity, { x: 1, y: 2.3, z: 8 })
-
-// Remove instance of a component
-VelocityComponent.deleteFrom(entity)
-```
-
-### Systems
-
-Systems are pure & simple functions.
-All your logic comes here.
-A system might hold data which is relevant to the system itself, but no data about the entities it processes.
-
-To add a system, all you need to do is define a function and add it to the engine. The function may optionally include a `dt` parameter with the delay since last frame, just like in prior versions of the SDK.
-
-```ts
-// Basic system
-function mySystem() {
-  console.log('my system is running')
+// The system function runs on every frame
+function clubLightsSystem(dt: number) {
+    // ... logic to update the light's position and color ...
 }
 
-engine.addSystem(mySystem)
+// Add the system to the engine to make it run
+engine.addSystem(clubLightsSystem)
+The system that handles button clicks demonstrates how to check for player input:
 
-// System with dt
-function mySystemDT(dt: number) {
-  console.log('time since last frame:  ', dt)
-}
+TypeScript
 
-engine.addSystem(mySystemDT)
-```
-
-#### Query components
-
-The way to group/query the components inside systems is using the method getEntitiesWith.
-`engine.getEntitiesWith(...components)`.
-
-```ts
-function physicsSystem(dt: number) {
-  for (const [entity, transform, velocity] of engine.getEntitiesWith(Transform, Velocity)) {
-    // transform & velocity are read only components.
-    if (transform.position.x === 10) {
-      // To update a component, you need to call the `.mutable` method
-      const mutableVelocity = VelocityComponent.getMutable(entity)
-      mutableVelocity.x += 1
+engine.addSystem(() => {
+    // Check if the primary action (click) was triggered on the danceFloorButton entity
+    if (inputSystem.isTriggered(InputAction.IA_POINTER, PointerEventType.PET_DOWN, danceFloorButton)) {
+        // ... logic to toggle the dance floor on or off ...
     }
-  }
+})
+Mutability
+By default, when you get a component's data, it's read-only for performance reasons. If you want to change a component's data inside a system, you must request a "mutable" version of it.
+
+In the danceFloorSystem from fx.ts, we need to change the emissiveColor of the material on every frame. We do this by getting a mutable reference to the Material component.
+
+TypeScript
+
+function danceFloorSystem(dt: number) {
+    // ...
+
+    // Get a mutable version of the dance floor's material
+    const mutableMaterial = Material.getMutable(danceFloor)
+
+    if (mutableMaterial.material?.$case === 'pbr' && mutableMaterial.material.pbr) {
+        // Now we can change its properties
+        // ...
+        mutableMaterial.material.pbr.emissiveColor = Color3.create(r, g, b)
+    }
 }
-
-// Add system to the engine
-engine.addSystem(physicsSystem)
-
-// Remove system
-engine.removeSystem(physicsSystem)
-```
-
-### Mutability
-
-Mutability is now an important distinction. We can choose to deal with mutable or with immutable versions of a component. We should use `getMutable` only when we plan to make changes to a component. Dealing with immutable versions of components results in a huge gain in performance.
-
-The `.get()` function in a component returns an immutable version of the component. You can only read its values, but can't change any of the properties on it.
-
-```ts
-const immutableTransform = Transform.get(myEntity)
-```
-
-To fetch the mutable version of a component, call it via `ComponentDefinition.getMutable()`. For example:
-
-```ts
-const mutableTransform = Transform.getMutable(myEntity)
-```
