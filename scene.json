@@ -2,18 +2,23 @@
   "ecs7": true,
   "runtimeVersion": "7",
   "display": {
-    "title": "SDK7 Scene Template",
-    "description": "template scene with SDK7",
+    "title": "Live FX Music Venue",
+    "description": "An interactive music venue and club built with the Decentraland SDK. A project from the DCL Creator Academy.",
     "navmapThumbnail": "images/scene-thumbnail.png",
     "favicon": "favicon_asset"
   },
-  "owner": "",
+  "owner": "DCL Foundation",
   "contact": {
-    "name": "SDK",
-    "email": ""
+    "name": "MrJStickel",
+    "email": "contact@mrjstickel.com"
   },
   "main": "bin/index.js",
-  "tags": [],
+  "tags": [
+    "interactive",
+    "music",
+    "venue",
+    "club"
+  ],
   "scene": {
     "parcels": [
       "0,0"
@@ -25,23 +30,14 @@
       "name": "spawn1",
       "default": true,
       "position": {
-        "x": [
-          0,
-          0
-        ],
-        "y": [
-          0,
-          0
-        ],
-        "z": [
-          0,
-          0
-        ]
+        "x": 8,
+        "y": 1,
+        "z": 2
       },
       "cameraTarget": {
         "x": 8,
-        "y": 1,
-        "z": 8
+        "y": 4,
+        "z": 14
       }
     }
   ],
