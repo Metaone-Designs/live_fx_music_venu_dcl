@@ -1,49 +1,79 @@
-# Interactive Nightclub Scene: Build Guide
+# Interactive Venue: Complete Build Guide
 
-This guide provides a complete, step-by-step walkthrough for building the Interactive Nightclub scene from a blank project.
-
----
+This guide provides a complete, step-by-step walkthrough for building the Interactive Venue scene from a blank project. This version includes extra details and verification steps to ensure a smooth development process.
 
 ## 1. Project Setup & Dependencies
 
-First, create the project, navigate into its directory, and install the required third-party library for the default video player.
+First, ensure you have the necessary tools installed, then create the project and install the required third-party library.
 
-1.  Create a folder on your PC for the project.
-2.  Open a terminal in that folder and run `dcl init`, selecting the "Blank scene" template.
-3.  Install the M1D component library by running:
+1.  **Create & Open Your Project Folder**:
+    Every great project starts with an organized folder.
+
+    * **On Windows:**
+        1.  Navigate to where you keep your projects (e.g., your `Documents` folder).
+        2.  Right-click on an empty space, go to **New > Folder**.
+        3.  Name the folder something clear, like `MyDCLVenue`.
+    * **Open in VS Code:**
+        1.  Launch Visual Studio Code.
+        2.  From the top menu, go to **File > Open Folder...**.
+        3.  Navigate to and select the `MyDCLVenue` folder you just created.
+        4.  Click "Select Folder" (or "Open"). Your VS Code window should now be focused on your new project folder.
+
+2.  **Open the VS Code Terminal**:
+    For all the following steps, we will use the terminal that is built into VS Code. You can open it by going to the top menu bar and selecting **Terminal > New Terminal**. A new command-line panel will appear at the bottom of your VS Code window.
+
+3.  **Install the Decentraland SDK**:
+    *(This only needs to be done once per computer).*
+    If you haven't already, install the DCL command-line interface (CLI) globally on your system. In the VS Code terminal, run the following command:
+    ```bash
+    npm install -g decentraland
+    ```
+    *What this does: This command installs the `decentraland` toolkit on your computer, allowing you to run commands like `dcl init` and `dcl start` from any folder.*
+
+4.  **Initialize the Scene**:
+    Now that you are inside the project folder in your terminal, run the `dcl init` command to create the basic file structure for a Decentraland scene.
+    ```bash
+    dcl init
+    ```
+    When prompted, select the **scene** project type and then the **blank scene** template.
+    *What this does: This command builds the skeleton of your project, including the `scene.json` file (which defines the parcel layout), the `src` folder (where your code lives), and the `package.json` file (which tracks your project's dependencies).*
+
+5.  **Install the M1D Components Library**:
+    Our project uses a pre-built library for the video player UI. Install it using `npm`.
     ```bash
     npm install @m1d/dcl-components
     ```
-4.  Inside the `src` folder, create a new folder named `modules`.
+    *What this does: This downloads the `@m1d/dcl-components` package from the internet and places it in a `node_modules` folder, making its code available to your project.*
 
----
+6.  **Verification Step: Test the Blank Scene**:
+    Before we add any custom code, let's make sure everything is working. Run the start command:
+    ```bash
+    npm run start
+    ```
+    A new browser tab should open showing a preview of your scene with a spinning cube. This confirms your development environment is set up correctly. Once you see it, you can stop the server by pressing `CTRL + C` in your terminal.
+
+7.  **Create Modules Folder**:
+    To keep our code organized, go into the `src` folder and create a new folder named `modules`.
 
 ## 2. Module Creation
 
-Next, we will create the individual TypeScript files that make up our scene.
+Now we will create and code the individual TypeScript files that make up our scene.
 
-### `src/modules/venue.ts`
+### Step 1: Build the Venue (`venue.ts`)
 
-This file defines the static physical structure of the venue. Create the file `src/modules/venue.ts` and add the following code.
+This file defines the static physical structure of the scene. Create a new file at `src/modules/venue.ts` and add the following code.
 
 ```typescript
 // Path: src/modules/venue.ts
-
 import { engine, Transform, MeshRenderer, Material, Entity, MeshCollider } from '@dcl/sdk/ecs'
 import { Color4, Quaternion } from '@dcl/sdk/math'
 
-/**
- * Defines the UV mapping for a box mesh to correctly display a texture on one face.
- */
 function setUVs() {
     return [
-        // Top Face
+        // Top, Bottom, Left, Right faces (8 UVs * 4 = 32 values)
         0, 0, 0, 0, 0, 0, 0, 0,
-        // Bottom Face
         0, 0, 0, 0, 0, 0, 0, 0,
-        // Left Face
         0, 0, 0, 0, 0, 0, 0, 0,
-        // Right Face
         0, 0, 0, 0, 0, 0, 0, 0,
         // Front Face (This is the one we want to texture)
         1, 1, 0, 1, 0, 0, 1, 0,
@@ -52,12 +82,7 @@ function setUVs() {
     ]
 }
 
-/**
- * Creates the static physical structure of the venue.
- * @returns An object containing a reference to the screen entity.
- */
 export function createVenue() {
-    // --- Floor ---
     const floor = engine.addEntity()
     Transform.create(floor, {
         position: { x: 8, y: 0, z: 8 },
@@ -69,7 +94,6 @@ export function createVenue() {
     })
     MeshCollider.setBox(floor)
 
-    // --- Video Screen ---
     const screen = engine.addEntity()
     Transform.create(screen, {
         position: { x: 8, y: 4.5, z: 15.5 },
@@ -86,11 +110,6 @@ export function createVenue() {
     return { screen }
 }
 
-/**
- * Applies a video texture to the screen's material.
- * @param screen The screen entity to apply the material to.
- * @param videoTexture The video texture object.
- */
 export function applyVideoMaterial(screen: Entity, videoTexture: any) {
     Material.setPbrMaterial(screen, {
         texture: videoTexture,
@@ -104,31 +123,15 @@ export function applyVideoMaterial(screen: Entity, videoTexture: any) {
 }
 ```
 
-### `src/modules/fx.ts`
+### Step 2: Add the Effects (`fx.ts`)
 
-This file creates all the dynamic and interactive elements. Create src/modules/fx.ts and add this code.
+This file creates the dynamic dance floor, moving lights, and the interactive control panel. Create a new file at `src/modules/fx.ts` and add the following code.
 
 ```typescript
 // Path: src/modules/fx.ts
-
-import {
-    engine,
-    Transform,
-    MeshRenderer,
-    Material,
-    PointerEvents,
-    PointerEventType,
-    InputAction,
-    inputSystem,
-    Entity,
-    MeshCollider,
-    TextShape
-} from '@dcl/sdk/ecs'
+import { engine, Transform, MeshRenderer, Material, PointerEvents, PointerEventType, InputAction, inputSystem, Entity, MeshCollider, TextShape } from '@dcl/sdk/ecs'
 import { Color3, Color4, Vector3, Quaternion } from '@dcl/sdk/math'
 
-/**
- * Creates all the interactive special effects for the venue.
- */
 export function createInteractiveFX() {
     // --- Interactive Dance Floor ---
     const danceFloor = engine.addEntity()
@@ -207,31 +210,23 @@ export function createInteractiveFX() {
 
     const danceFloorButton = engine.addEntity()
     Transform.create(danceFloorButton, {
-        parent: controlPanel,
-        position: { x: -0.35, y: 0, z: 0.1 },
-        scale: { x: 0.2, y: 0.2, z: 0.1 },
-        rotation: Quaternion.fromEulerDegrees(90, 0, 0)
+        parent: controlPanel, position: { x: -0.35, y: 0, z: 0.1 },
+        scale: { x: 0.2, y: 0.2, z: 0.1 }, rotation: Quaternion.fromEulerDegrees(90, 0, 0)
     })
     MeshRenderer.create(danceFloorButton, { mesh: { $case: 'cylinder', cylinder: { radiusTop: 1, radiusBottom: 1 } } })
     Material.setPbrMaterial(danceFloorButton, { albedoColor: Color4.Green() })
     PointerEvents.create(danceFloorButton, {
         pointerEvents: [{ eventType: PointerEventType.PET_DOWN, eventInfo: { button: InputAction.IA_POINTER, hoverText: 'Toggle Dance Floor' } }]
     })
-
+    
     const danceFloorLabel = engine.addEntity()
-    Transform.create(danceFloorLabel, {
-        parent: controlPanel,
-        position: { x: -0.35, y: 0.25, z: 0.1 },
-        rotation: Quaternion.fromEulerDegrees(0, 180, 0)
-    })
+    Transform.create(danceFloorLabel, { parent: controlPanel, position: { x: -0.35, y: 0.25, z: 0.1 }, rotation: Quaternion.fromEulerDegrees(0, 180, 0)})
     TextShape.create(danceFloorLabel, { text: 'Floor', fontSize: 2, textColor: Color4.White() })
 
     const lightsButton = engine.addEntity()
     Transform.create(lightsButton, {
-        parent: controlPanel,
-        position: { x: 0.35, y: 0, z: 0.1 },
-        scale: { x: 0.2, y: 0.2, z: 0.1 },
-        rotation: Quaternion.fromEulerDegrees(90, 0, 0)
+        parent: controlPanel, position: { x: 0.35, y: 0, z: 0.1 },
+        scale: { x: 0.2, y: 0.2, z: 0.1 }, rotation: Quaternion.fromEulerDegrees(90, 0, 0)
     })
     MeshRenderer.create(lightsButton, { mesh: { $case: 'cylinder', cylinder: { radiusTop: 1, radiusBottom: 1 } } })
     Material.setPbrMaterial(lightsButton, { albedoColor: Color4.Green() })
@@ -240,11 +235,7 @@ export function createInteractiveFX() {
     })
 
     const lightsLabel = engine.addEntity()
-    Transform.create(lightsLabel, {
-        parent: controlPanel,
-        position: { x: 0.35, y: 0.25, z: 0.1 },
-        rotation: Quaternion.fromEulerDegrees(0, 180, 0)
-    })
+    Transform.create(lightsLabel, { parent: controlPanel, position: { x: 0.35, y: 0.25, z: 0.1 }, rotation: Quaternion.fromEulerDegrees(0, 180, 0)})
     TextShape.create(lightsLabel, { text: 'Lights', fontSize: 2, textColor: Color4.White() })
 
     engine.addSystem(() => {
@@ -266,21 +257,17 @@ export function createInteractiveFX() {
 }
 ```
 
-### `src/index.ts`
+### Step 3: Tie it All Together (`index.ts`)
 
-Finally, update your main entry point to orchestrate these modules. Replace the contents of src/index.ts with this:
+This is the main entry point that orchestrates the other modules. Open the existing `src/index.ts` file, delete all of its content, and replace it with the following:
 
 ```typescript
 // Path: src/index.ts
-
 import { applyVideoMaterial, createVenue } from './modules/venue'
 import { createInteractiveFX } from './modules/fx'
 import { createVideoGuide } from '@m1d/dcl-components'
 import { VideoPlayer, Material } from '@dcl/sdk/ecs'
 
-/**
- * The main function is the entry point of the scene.
- */
 export async function main() {
   // --- Create the Scene's Foundation ---
   const { screen } = createVenue()
@@ -288,7 +275,7 @@ export async function main() {
   // --- Add Interactive Elements ---
   createInteractiveFX()
 
-  // --- OPTION 1: Set up Video Player using @m1d/dcl-components (Default) ---
+  // --- Set up Video Player using @m1d/dcl-components ---
   const videoGuide = await createVideoGuide({
     localVideo: {
       id: 'local-video',
@@ -301,37 +288,12 @@ export async function main() {
   if (videoGuide && videoGuide.videoTexture) {
     applyVideoMaterial(screen, videoGuide.videoTexture)
   }
-
-  /*
-  // --- OPTION 2: Play video with built-in DCL components ---
-  // To use this, comment out the "OPTION 1" block above and uncomment this entire block.
-  
-  VideoPlayer.create(screen, {
-    src: '[https://player.vimeo.com/external/902624555.m3u8?s=b2b78debfef94d115dd5c00a76d633e863786372&logging=false](https://player.vimeo.com/external/902624555.m3u8?s=b2b78debfef94d115dd5c00a76d633e863786372&logging=false)',
-    playing: true,
-    loop: true,
-  })
-
-  const videoTexture = Material.Texture.Video({ videoPlayerEntity: screen })
-  applyVideoMaterial(screen, videoTexture)
-  */
 }
 ```
 
-## 3. Testing & Building
+## 3. Final Test
 
-From your project's root directory:
-To run a local preview:
+From your project's root directory, run the preview command again. You should now see your fully interactive venue!
 
-Bash
 ```bash
 npm run start
-```
-
-To create a deployment build:
-
-Bash
-```bash
-npm run deploy
-```
-
