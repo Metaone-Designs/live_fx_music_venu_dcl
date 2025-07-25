@@ -168,4 +168,4 @@ function danceFloorSystem(dt: number) {
 
 **MrJStickel**
 * 🐙 GitHub: [j-stickel](https://github.com/j-stickel)
-* 🌐 M1D: [m1d.io](https://www.m1d.io)
+* 🌐 M1D: [m1d.io](https://m1d.io)
