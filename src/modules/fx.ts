@@ -21,41 +21,92 @@ import { Color3, Color4, Vector3, Quaternion } from '@dcl/sdk/math'
  */
 export function createInteractiveFX() {
     // --- Interactive Dance Floor ---
-    const danceFloor = engine.addEntity()
-    // Store the original scale to easily toggle the floor on and off.
-    const danceFloorOriginalScale = Vector3.create(10, 0.02, 10)
+    // This section is now updated to create a grid of cubes.
 
-    Transform.create(danceFloor, {
-        position: { x: 8, y: 0.06, z: 8 }, // Slightly above the main floor
-        scale: danceFloorOriginalScale
-    })
-    MeshRenderer.setBox(danceFloor)
-    MeshCollider.setBox(danceFloor) // Collider for interaction (though not used for walking here)
-    Material.setPbrMaterial(danceFloor, {
-        albedoColor: Color4.fromHexString('#9932CC'), // A base purple color
-        emissiveColor: Color4.fromHexString('#9932CC'), // Make it glow with the same color
-        emissiveIntensity: 1
-    })
+    const DANCE_FLOOR_ROWS = 8;
+    const DANCE_FLOOR_COLS = 12;
+    const MAX_HEIGHT = 2;
+    const floorCenter = Vector3.create(8, 0, 8); // Center point for the dance floor grid
 
-    // A 'system' is a function that runs on every frame of the scene.
-    // This system will continuously update the dance floor's color.
-    let totalTime = 0 // A counter to track elapsed time.
-    engine.addSystem(function danceFloorSystem(dt) {
-        // `dt` is 'delta time', the time in seconds since the last frame.
-        totalTime += dt
+    // Define the total area the dance floor will occupy
+    const areaWidth = 14;
+    const areaDepth = 12;
 
-        // Get a mutable reference to the material to change its properties.
-        const mutableMaterial = Material.getMutable(danceFloor)
-        // Check if the material is a PBR material before trying to change its PBR properties.
-        if (mutableMaterial.material?.$case === 'pbr' && mutableMaterial.material.pbr) {
-            // Use sine and cosine waves based on time to create a smooth, pulsing color change.
-            const r = (Math.sin(totalTime * 2.0) + 1) / 2 // Fast red channel pulse
-            const g = (Math.cos(totalTime * 0.5) + 1) / 2 // Slow green channel pulse
-            const b = (Math.sin(totalTime * 1.0 + Math.PI) + 1) / 2 // Medium blue channel pulse (offset)
-            // Apply the new color to the emissive property.
-            mutableMaterial.material.pbr.emissiveColor = Color3.create(r, g, b)
+    const danceCubes: Entity[] = []; // Array to hold all the cube entities
+    const danceCubeOriginalScales = new Map<Entity, Vector3>(); // Map to store the original scale of each cube for toggling
+
+    // Calculate the spacing between each cube's center
+    const xSpacing = areaWidth / DANCE_FLOOR_COLS;
+    const zSpacing = areaDepth / DANCE_FLOOR_ROWS;
+
+    // Calculate the starting corner of the grid, which is the bottom-left
+    const startX = floorCenter.x - areaWidth / 2;
+    const startZ = floorCenter.z - areaDepth / 2;
+
+
+    // Create a 8x12 grid of cubes
+    for (let i = 0; i < DANCE_FLOOR_ROWS; i++) {
+        for (let j = 0; j < DANCE_FLOOR_COLS; j++) {
+            const cube = engine.addEntity();
+
+            // --- Set a random height for each cube ---
+            const randomHeight = Math.random() * MAX_HEIGHT + 0.1; // Add 0.1 to ensure a minimum height
+            const originalScale = Vector3.create(1, randomHeight, 1);
+
+            // Store the original scale so we can restore it when toggling the floor on
+            danceCubeOriginalScales.set(cube, originalScale);
+
+            // --- Position the cube in the grid ---
+            // Calculate the center position for the current cube within its "cell"
+            const x = startX + (j * xSpacing) + (xSpacing / 2);
+            const y = randomHeight / 2; // Position the base of the cube at y=0
+            const z = startZ + (i * zSpacing) + (zSpacing / 2);
+
+            Transform.create(cube, {
+                position: { x, y, z },
+                scale: originalScale
+            });
+
+            MeshRenderer.setBox(cube);
+            MeshCollider.setBox(cube); // Add a collider to each cube
+            Material.setPbrMaterial(cube, {
+                albedoColor: Color4.fromHexString('#9932CC'), // A base purple color
+                emissiveColor: Color4.fromHexString('#9932CC'), // Make it glow
+                emissiveIntensity: 1
+            });
+
+            danceCubes.push(cube); // Add the cube to our array for later use
         }
-    })
+    }
+
+    // A 'system' that runs on every frame to update the color of each cube independently.
+    let totalTime = 0;
+    engine.addSystem(function danceCubesSystem(dt) {
+        // `dt` is 'delta time', the time in seconds since the last frame.
+        totalTime += dt;
+
+        for (let i = 0; i < danceCubes.length; i++) {
+            const cube = danceCubes[i];
+            
+            // Skip updating if the cube is toggled off (scale is zero)
+            if (Vector3.equals(Transform.get(cube).scale, Vector3.Zero())) continue;
+
+            // Use the cube's index to create a time offset. This makes each cube's
+            // color change at a slightly different time, creating a random, chaotic effect.
+            const timeOffset = i * 0.5;
+
+            const mutableMaterial = Material.getMutable(cube);
+            if (mutableMaterial.material?.$case === 'pbr' && mutableMaterial.material.pbr) {
+                // Use sine and cosine waves based on time to create a smooth, pulsing color change.
+                const r = (Math.sin((totalTime + timeOffset) * 2.0) + 1) / 2;
+                const g = (Math.cos((totalTime + timeOffset) * 0.5) + 1) / 2;
+                const b = (Math.sin((totalTime + timeOffset) * 1.0 + Math.PI) + 1) / 2;
+                // Apply the new color to the emissive property.
+                mutableMaterial.material.pbr.emissiveColor = Color3.create(r, g, b);
+            }
+        }
+    });
+
 
     // --- Club Lighting Effect ---
     const lightCount = 8 // The number of lights to create.
@@ -112,8 +163,8 @@ export function createInteractiveFX() {
     // Create a parent entity for the control panel to easily move/rotate all buttons and labels together.
     const controlPanel = engine.addEntity()
     Transform.create(controlPanel, {
-        position: { x: 15.5, y: 1, z: 8 }, // Position the panel on the right wall.
-        rotation: Quaternion.fromEulerDegrees(0, -90, 0) // Rotate it to face the center.
+        position: { x: 8, y: 1, z: 2 }, // Position the panel on the right wall.
+        rotation: Quaternion.fromEulerDegrees(0, 180, 0) // Rotate it to face the center.
     })
 
     // Create a backing for the panel.
@@ -186,13 +237,18 @@ export function createInteractiveFX() {
     engine.addSystem(() => {
         // Check if the dance floor button was clicked in this frame.
         if (inputSystem.isTriggered(InputAction.IA_POINTER, PointerEventType.PET_DOWN, danceFloorButton)) {
-            const transform = Transform.getMutable(danceFloor)
-            // Check if the floor is currently visible by checking its scale.
-            const isVisible = !Vector3.equals(transform.scale, Vector3.Zero())
-            // Toggle visibility by setting scale to zero (to hide) or back to original (to show).
-            transform.scale = isVisible ? Vector3.Zero() : danceFloorOriginalScale
+            // Check the visibility of the first cube to determine the state for all cubes.
+            const isVisible = !Vector3.equals(Transform.get(danceCubes[0]).scale, Vector3.Zero());
+            
+            // Loop through all cubes and toggle their visibility.
+            for (const cube of danceCubes) {
+                const transform = Transform.getMutable(cube);
+                // Set scale to zero to hide, or restore its original scale to show.
+                transform.scale = isVisible ? Vector3.Zero() : (danceCubeOriginalScales.get(cube) || Vector3.One());
+            }
+
             // Update the button color for visual feedback: Red for "off", Green for "on".
-            Material.setPbrMaterial(danceFloorButton, { albedoColor: isVisible ? Color4.Red() : Color4.Green() })
+            Material.setPbrMaterial(danceFloorButton, { albedoColor: isVisible ? Color4.Red() : Color4.Green() });
         }
 
         // Check if the lights button was clicked in this frame.
