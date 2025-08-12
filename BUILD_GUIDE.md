@@ -33,7 +33,7 @@ First, ensure you have the necessary tools installed, then create the project an
 4.  **Initialize the Scene**:
     Now that you are inside the project folder in your terminal, run the `dcl init` command to create the basic file structure for a Decentraland scene.
     ```bash
-    dcl init
+    npx @dcl/sdk-commands init 
     ```
     When prompted, select the **scene** project type and then the **blank scene** template.
     *What this does: This command builds the skeleton of your project, including the `scene.json` file (which defines the parcel layout), the `src` folder (where your code lives), and the `package.json` file (which tracks your project's dependencies).*
