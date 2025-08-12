@@ -27,9 +27,9 @@ export async function main() {
   const videoGuide = await createVideoGuide({
     // Configure the component with a video source.
     localVideo: {
-      id: 'local-video', // A unique identifier for the video player instance.
-      src: 'https://player.vimeo.com/external/902624555.m3u8?s=b2b78debfef94d115dd5c00a76d633e863786372&logging=false', // The URL for the video stream.
-      socialsLink: 'https://www.m1d.io', // A link for the component's UI.
+      id: '', // A unique identifier for the video player instance.
+      src: '', // The URL for the video stream.
+      socialsLink: '', // A link for the component's UI.
     }
   });
 
