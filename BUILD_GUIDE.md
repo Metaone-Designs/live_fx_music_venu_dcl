@@ -38,12 +38,8 @@ First, ensure you have the necessary tools installed, then create the project an
     When prompted, select the **scene** project type and then the **blank scene** template.
     *What this does: This command builds the skeleton of your project, including the `scene.json` file (which defines the parcel layout), the `src` folder (where your code lives), and the `package.json` file (which tracks your project's dependencies).*
 
-5.  **Install the M1D Components Library**:
-    Our project uses a pre-built library for the video player UI. Install it using `npm`.
-    ```bash
-    npm install @m1d/dcl-components
-    ```
-    *What this does: This downloads the `@m1d/dcl-components` package from the internet and places it in a `node_modules` folder, making its code available to your project.*
+5.  **No Video Library to Install**:
+    The video player uses the SDK's built-in `VideoPlayer` component, so there is nothing more to install for it.
 
 6.  **Verification Step: Test the Blank Scene**:
     Before we add any custom code, let's make sure everything is working. Run the start command:
@@ -265,29 +261,23 @@ This is the main entry point that orchestrates the other modules. Open the exist
 // Path: src/index.ts
 import { applyVideoMaterial, createVenue } from './modules/venue'
 import { createInteractiveFX } from './modules/fx'
-import { createVideoGuide } from '@m1d/dcl-components'
 import { VideoPlayer, Material } from '@dcl/sdk/ecs'
 
-export async function main() {
+export function main() {
   // --- Create the Scene's Foundation ---
   const { screen } = createVenue()
 
   // --- Add Interactive Elements ---
   createInteractiveFX()
 
-  // --- Set up Video Player using @m1d/dcl-components ---
-  const videoGuide = await createVideoGuide({
-    localVideo: {
-      id: 'local-video',
-      src: '[https://player.vimeo.com/external/902624555.m3u8?s=b2b78debfef94d115dd5c00a76d633e863786372&logging=false](https://player.vimeo.com/external/902624555.m3u8?s=b2b78debfef94d115dd5c00a76d633e863786372&logging=false)',
-      socialsLink: '[https://www.m1d.io](https://www.m1d.io)',
-    }
-  });
-
-  // --- Connect the Video to the Screen ---
-  if (videoGuide && videoGuide.videoTexture) {
-    applyVideoMaterial(screen, videoGuide.videoTexture)
-  }
+  // --- Play the Video on the Screen ---
+  VideoPlayer.create(screen, {
+    src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    playing: true,
+    loop: true
+  })
+  const videoTexture = Material.Texture.Video({ videoPlayerEntity: screen })
+  applyVideoMaterial(screen, videoTexture)
 }
 ```
 

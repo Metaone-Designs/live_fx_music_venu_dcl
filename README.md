@@ -32,25 +32,11 @@ Alternatively, you can open the project folder in VS Code and use the **Run Scen
 
 ---
 
-## 🎬 Video Player Options
+## 🎬 Video Player
 
-This scene includes two different methods for playing video, which you can switch between in `src/index.ts`.
+The screen plays an HLS stream with the SDK's built-in `VideoPlayer` component, so there is no extra library to install. To show your own stream, change `STREAM_URL` in `src/index.ts` to your `.m3u8` address.
 
-### **Option 1: Third-Party Library (Default)**
-
-The scene defaults to using the `@m1d/dcl-components` library.
-
-* **Pros**: Provides a user interface with playback controls and other features.
-* **Cons**: Requires installing an external library by running `npm install`.
-
-### **Option 2: Built-in SDK Components**
-
-The project also contains a commented-out block that uses the SDK's native `VideoPlayer` component.
-
-* **Pros**: No external libraries are needed. The scene will run without needing to `npm install`.
-* **Cons**: Provides a basic video stream with no built-in UI for playback controls.
-
-**How to enable**: In `src/index.ts`, comment out the "OPTION 1" block and uncomment the "OPTION 2" block.
+For visitor analytics in your scene, start from the free starter at [thestatic-dcl-free](https://github.com/thestatic-tv/thestatic-dcl-free). The Standard and Pro starters from [thestatic.tv](https://thestatic.tv) add a channel guide with live streams.
 
 ---
 
@@ -168,4 +154,4 @@ function danceFloorSystem(dt: number) {
 
 **MrJStickel**
 * 🐙 GitHub: [j-stickel](https://github.com/j-stickel)
-* 🌐 M1D: [m1d.io](https://m1d.io)
+* 🌐 TheStatic: [thestatic.tv](https://thestatic.tv)
